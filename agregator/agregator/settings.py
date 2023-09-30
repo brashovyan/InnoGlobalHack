@@ -73,14 +73,22 @@ WSGI_APPLICATION = 'agregator.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'hakaton',
+#         'USER': 'djangoadmin',
+#         'PASSWORD': '123',
+#         'HOST': 'localhost',
+#         'port': '',
+#     }
+# }
+
+# БАЗА ДАННЫХ (пока sqlite3)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'hakaton',
-        'USER': 'djangoadmin',
-        'PASSWORD': '123',
-        'HOST': 'localhost',
-        'port': '',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 

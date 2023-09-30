@@ -24,15 +24,5 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ProfessionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profession
-        fields = "__all__"
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = "__all__"
 
 

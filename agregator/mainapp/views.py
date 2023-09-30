@@ -105,37 +105,47 @@ class TasksInSprint(APIView):
         return Response({'tasks': TaskSerializer(tasks, many=True).data})
 
 
+# создание проекта
 class CreateProjectApiView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         # сначала я получаю данные с фронта
 
-        # project_title = request.data['project_title']
-        # project_description = request.data['project_description']
-        # usernames = request.data['usernames']
-        usernames = User.objects.all()
-        usernames_id = []
-        for username in usernames:
-            user = User.objects.get(username=username)
-            usernames_id.append(user.id)
-        # professions = []
-        # scores = []
+        project_title = request.data['project_title']
 
-        # title = request.data['title'],
-        # content = request.data['content'],
-
-        # тут происходит магия и создаётся проект
-
-        usernames_id.append(request.user.id)
         project_data = {
-            'title': "Тестовый проект название",
-            'description': "Тестовый проект описание",
-            'owners': usernames_id
+            'title': project_title,
+            'description': "Описание проекта",
+            'owners': [request.user.id]
         }
         serializer = ProjectSerializer(data=project_data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        return Response({"answer": "Проект создан"})
+
+
+# добавление юзера в проект
+class AddUserToProject(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        username = request.data['user']
+        profession = request.data['profession']
+        master = request.data['master']
+        story_point = request.data['story_point']
+        project = Project.objects.all().last()
+        user = User.objects.get(username=username)
+        user.profession = profession
+        user.master = master
+        user.story_point = story_point
+        user.save()
+        project.owners.add(user)
+
+        return Response({"answer": "Юзер добавлен"})
+
+
 
 
 # Создать проект
@@ -246,10 +256,66 @@ class TasksInProject(APIView):
                     "owner": task.owner
                 }
                 tasks.append(d)
-
-        print(type(tasks))
         return Response({'tasks': TaskSerializer(tasks, many=True).data})
 
 
+# Алгоритм агрегации задач
+class CreateTasks(APIView):
+    def post(self, request):
+        project = Project.objects.all().last()
+        tasks = request.data["tasks"]
+
+        # сортирую таски по приоритету (первый - самый приоритетный)
+        for i in range(0, len(tasks)):
+            for j in range(0, len(tasks)):
+                if tasks[j]['priority'] < tasks[i]['priority']:
+                    tasks[j]['priority'], tasks[i]['priority'] = tasks[i]['priority'], tasks[j]['priority']
+
+        users = project.owners.all()
+        # print(users[0])
+
+        for i in range(0, len(tasks), 5):
+            # создаю спринт
+            sprint1_data = {
+                            'title': f"спринт {i}",
+                            'description': "Тестовое описание",
+                            'date_start': '2023-09-30',
+                            'date_end': '2023-09-30',
+                            'project': project.id,
+                            'status': False
+                        }
+
+            serializer = SprintSerializer(data=sprint1_data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            sprint = Sprint.objects.all().last()
+
+            # и закидываю в него первые 5 тасков
+            for j in range(0, 5):
+                if len(tasks) > 0:
+                    #id = get_user_for_task()
+                    task1_data = {
+                            'title': f"{tasks[0]['title']}",
+                            'description': "Тестовое описание",
+                            'sprint': sprint.id,
+                            'priority': f"{tasks[0]['priority']}",
+                            'story_point': f"{tasks[0]['story_point']}",
+                            'tag': f"{tasks[0]['tag']}",
+                            'owner': request.user.id,
+                            'status': "ToDo",
+                        }
+
+                    serializer = TaskSerializer(data=task1_data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    del tasks[0]
+
+
+        return Response({'answer': "Окей"})
+
+
+def get_user_for_task():
+    return 1
 
 
