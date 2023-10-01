@@ -131,7 +131,7 @@ class AddUserToProject(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        username = request.data['user']
+        username = request.data['username']
         profession = request.data['profession']
         master = request.data['master']
         story_point = request.data['story_point']
@@ -278,7 +278,7 @@ class CreateTasks(APIView):
 
         # создаю спринт
         sprint1_data = {
-                        'title': f"спринт {i}",
+                        'title': f"спринт {project.title} 1",
                         'description': "Тестовое описание",
                         'date_start': '2023-09-30',
                         'date_end': '2023-09-30',
@@ -300,7 +300,7 @@ class CreateTasks(APIView):
             i += 1
             if i > 6:
                 sprint1_data = {
-                    'title': f"спринт {i}",
+                    'title': f"спринт {project.title} {i}",
                     'description': "Тестовое описание",
                     'date_start': '2023-09-30',
                     'date_end': '2023-09-30',
@@ -365,5 +365,23 @@ def get_user_for_task(users, task):
 
 
             return null
+
+
+# отправка уведомлений по почте
+import smtplib
+def NotificationSend(request):
+    # Готовая база для уведомления по почте
+    your_email_service = "smtp.google.com"
+    your_email_port = 587
+    sendler = smtplib.SMTP('smtp.gmail.com', 587)
+    sendler.starttls()
+    sendler.login('youremaillogin@mail.ru', 'youremailpassword')
+    subscribe_email = ['emailone@mail.ru',
+    'emailtwo@mail.ru',
+    'emailthree@mail.ru']
+    message = "Привет. Для тебя назначили новые задачи. Зайди в свой профиль на портале или перейди по ссылке: testtest.ru"
+
+    sendler.sendmail("itsamyemail", subscribe_email, message)
+    sendler.quit()
 
 
