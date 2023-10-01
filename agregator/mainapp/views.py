@@ -258,6 +258,7 @@ class TasksInProject(APIView):
                 tasks.append(d)
         return Response({'tasks': TaskSerializer(tasks, many=True).data})
 
+users_story_point = {}
 
 # Алгоритм агрегации задач
 class CreateTasks(APIView):
@@ -274,48 +275,95 @@ class CreateTasks(APIView):
         users = project.owners.all()
         # print(users[0])
 
-        for i in range(0, len(tasks), 5):
-            # создаю спринт
-            sprint1_data = {
-                            'title': f"спринт {i}",
-                            'description': "Тестовое описание",
-                            'date_start': '2023-09-30',
-                            'date_end': '2023-09-30',
-                            'project': project.id,
-                            'status': False
-                        }
 
-            serializer = SprintSerializer(data=sprint1_data)
+        # создаю спринт
+        sprint1_data = {
+                        'title': f"спринт {i}",
+                        'description': "Тестовое описание",
+                        'date_start': '2023-09-30',
+                        'date_end': '2023-09-30',
+                        'project': project.id,
+                        'status': False
+                    }
+
+        serializer = SprintSerializer(data=sprint1_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        sprint = Sprint.objects.all().last()
+
+        # и закидываю в него первые 5 тасков
+        # for j in range(0, 5):
+        #     if len(tasks) > 0:
+        i = 0
+        for task in tasks:
+            i += 1
+            if i > 6:
+                sprint1_data = {
+                    'title': f"спринт {i}",
+                    'description': "Тестовое описание",
+                    'date_start': '2023-09-30',
+                    'date_end': '2023-09-30',
+                    'project': project.id,
+                    'status': False
+                }
+
+                serializer = SprintSerializer(data=sprint1_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+                sprint = Sprint.objects.all().last()
+                i = 0
+
+            user_id = get_user_for_task(users, task)
+            task1_data = {
+                    'title': f"{task['title']}",
+                    'description': "Тестовое описание",
+                    'sprint': sprint.id,
+                    'priority': f"{task['priority']}",
+                    'story_point': f"{task['story_point']}",
+                    'tag': f"{task['tag']}",
+                    'owner': user_id,
+                    'status': "ToDo",
+                }
+
+            serializer = TaskSerializer(data=task1_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-
-            sprint = Sprint.objects.all().last()
-
-            # и закидываю в него первые 5 тасков
-            for j in range(0, 5):
-                if len(tasks) > 0:
-                    #id = get_user_for_task()
-                    task1_data = {
-                            'title': f"{tasks[0]['title']}",
-                            'description': "Тестовое описание",
-                            'sprint': sprint.id,
-                            'priority': f"{tasks[0]['priority']}",
-                            'story_point': f"{tasks[0]['story_point']}",
-                            'tag': f"{tasks[0]['tag']}",
-                            'owner': request.user.id,
-                            'status': "ToDo",
-                        }
-
-                    serializer = TaskSerializer(data=task1_data)
-                    serializer.is_valid(raise_exception=True)
-                    serializer.save()
-                    del tasks[0]
+            # del tasks[0]
 
 
         return Response({'answer': "Окей"})
 
 
-def get_user_for_task():
-    return 1
+def get_user_for_task(users, task):
+    # Собираю только нужных по мастерству юзеров (__gte это больше или равно)
+    # TODO
+    # Вместо тройки надо поставить стори поинты таска (хз как сделать)
+    story_point = task['story_point']
+    user_id = []
+    for user in users:
+        user_id.append(user.id)
+
+    all_users_task = User.objects.filter(master__gte=story_point, id__in=user_id)
+
+    # Генерируем словарь юзеров и их сторипоинтов
+
+    for user in all_users_task:
+        if user.master >= task['story_point']:
+            user_id = int(user.id)
+            user_story_point = int(user.story_point)
+            users_story_point[user_id] = user=user_story_point
+
+    for user in all_users_task:
+        # if user.id in users_story_point.keys():
+        if task['story_point'] <= users_story_point[user.id] and user.id in users_story_point.keys():
+            users_story_point[user.id] -= task['story_point']
+            return user.id
+        else:
+            continue
+
+
+            return null
 
 
