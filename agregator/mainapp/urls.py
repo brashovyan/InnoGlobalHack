@@ -21,6 +21,6 @@ urlpatterns = [
     path('tasks_in_sprint/<int:pk>', TasksInSprint.as_view()), # получить все таски в спринте по айди
     path('get_user/<int:pk>', GetUserById.as_view()), # получить username по его айди
     path('tasks_in_project/<int:pk>', TasksInProject.as_view()), # получить все таски проекта (бэклог)
-    path('add_user_to_project/', AddUserToProject.as_view()),
-    path('create_tasks/', CreateTasks.as_view()),
+    path('add_user_to_project/', AddUserToProject.as_view()), # добавить юзера в проект
+    path('create_tasks/', CreateTasks.as_view()), # создать таски (там где алгоритм)
 ]

@@ -30,6 +30,9 @@ class Project(models.Model):
     owners = models.ManyToManyField(User, null=True, blank=True)
     objects = models.Manager()
 
+    def __str__(self):
+        return self.title
+
 
 class Sprint(models.Model):
     title = models.CharField(max_length=255, null=True)
